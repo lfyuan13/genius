@@ -30,6 +30,8 @@ class BaseSegmentProcess(object):
         words = []
         for index in range(length):
             group = text_groups[index]
+            # 上述group_marker 先根据非汉字进行了切分，
+            # 下面根据切分结果进行word存储，记录了word原始位置
             word = Word(group, offset=offset, source=self.segment_type)
             offset += len(group)
             words.append(word)
