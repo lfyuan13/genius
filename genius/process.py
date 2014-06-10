@@ -50,17 +50,17 @@ class SimpleSegmentProcess(BaseSegmentProcess):
     def __init__(self, **kwargs):
         BaseSegmentProcess.__init__(self, **kwargs)
         self.loader = ResourceLoader()
-        self.seg_model = self.loader.load_crf_seg_model()
+        self.seg_model = self.loader.load_crf_seg_model()  # 返回一个crf_seg模型Model
         self.segment_type = 'crf'
 
     def process(self, word):
-        base_words = BaseSegmentProcess.process(self, word)
+        base_words = BaseSegmentProcess.process(self, word)  # 分割结果是一个个汉字和符号,空格?
         result_words = []
         pre_label_words = []
         for word in base_words:
             if word.marker != 'WHITESPACE':
-                pre_label_words.append(word)
-            else:
+                pre_label_words.append(word)  # 非空格加入pre_label_words
+            else:  # 如果遇到空格了，就对前面这句话进行label
                 label = self.label_sequence(pre_label_words)
                 result_words.extend(self.segment(label, pre_label_words))
                 pre_label_words = []
@@ -71,6 +71,7 @@ class SimpleSegmentProcess(BaseSegmentProcess):
         return result_words
 
     def label_sequence(self, words, nbest=1):
+        """ 运用wapiti来标注 """
         if self.seg_model.options.nbest != nbest:
             self.seg_model.options.nbest = nbest
         label = self.seg_model.label_sequence(
@@ -80,15 +81,16 @@ class SimpleSegmentProcess(BaseSegmentProcess):
         return label.strip(self.string_helper.whitespace_range)
 
     def segment(self, label, pre_label_words):
+        """ 利用标注结果BOE来切分词语  """
         result_words = []
         offset = 0
         for index, label in enumerate(label.split('\n')):
             if 'S' == label:
-                if index - offset > 1:
+                if index - offset > 1:  # 说明"S"前面有个词语
                     pre_word = copy.copy(pre_label_words[offset])
                     pre_word.text = u''.join(
                         [word.text for word in pre_label_words[offset:index]]
-                    )
+                    )  # 
                     pre_word.source = self.segment_type
                     result_words.append(pre_word)
                 result_words.append(pre_label_words[index])
@@ -130,7 +132,7 @@ class KeywordsSegmentProcess(SimpleSegmentProcess):
         for word in base_words:
             if word.marker != 'WHITESPACE':
                 pre_label_words.append(word)
-            else:
+            else:  # 这里利用SimpleSegment来label_sequence
                 labels = self.label_sequence(
                     pre_label_words, nbest).split('\n\n')
                 result_words.extend(self.segment(labels, pre_label_words))
