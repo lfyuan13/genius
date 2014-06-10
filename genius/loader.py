@@ -14,7 +14,7 @@ library_path = os.path.join(here, 'library')
 
 class ResourceLoader(object):
 
-    _instance = None
+    _instance = None  # 单例？
 
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
@@ -38,7 +38,7 @@ class ResourceLoader(object):
                 options['model'] = os.path.join(
                     library_path, "crf_seg_model.txt")
             if os.path.exists(options['model']):
-                _crf_seg_model = Model(**options)
+                _crf_seg_model = Model(**options)  # 载入词典，建立crf模型
             else:
                 e = IOError()
                 e.errno = 2
